@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -255,6 +254,7 @@
             text-align: center;
             margin: 20px 0;
             font-weight: bold;
+            min-height: 24px;
         }
 
         .empty {
@@ -352,11 +352,11 @@
                 <label for="especie">Espécie</label>
                 <select id="especie" required>
                     <option value="">Selecione</option>
-                    <option value="Cachorro">Cachorro</option>
-                    <option value="Gato">Gato</option>
-                    <option value="Coelho">Coelho</option>
-                    <option value="Pássaro">Pássaro</option>
-                    <option value="Outro">Outro</option>
+                    <option value="CACHORRO">Cachorro</option>
+                    <option value="GATO">Gato</option>
+                    <option value="COELHO">Coelho</option>
+                    <option value="PASSARO">Pássaro</option>
+                    <option value="OUTRO">Outro</option>
                 </select>
             </div>
 
@@ -371,12 +371,13 @@
                 <input type="number" id="idade" min="0" required>
             </div>
 
+            <!-- Os values abaixo precisam ser IGUAIS aos nomes dos enums Sexo e Porte do Java. -->
             <div class="form-group">
                 <label for="sexo">Sexo</label>
                 <select id="sexo" required>
                     <option value="">Selecione</option>
                     <option value="Macho">Macho</option>
-                    <option value="Fêmea">Fêmea</option>
+                    <option value="Femea">Fêmea</option>
                 </select>
             </div>
 
@@ -385,7 +386,7 @@
                 <select id="porte" required>
                     <option value="">Selecione</option>
                     <option value="Pequeno">Pequeno</option>
-                    <option value="Médio">Médio</option>
+                    <option value="Medio">Médio</option>
                     <option value="Grande">Grande</option>
                 </select>
             </div>
@@ -435,10 +436,39 @@
     // ENDEREÇO DA API
     const API_URL = "http://localhost:8080/api/pets";
 
+    const FOTO_PADRAO = "https://placehold.co/400x300/f1eaff/7656d6?text=Pet+Mania";
+
+    // Texto amigável para os valores dos enums vindos da API
+    const ROTULOS = {
+        Femea: "Fêmea",
+        Medio: "Médio",
+        CACHORRO: "Cachorro",
+        GATO: "Gato",
+        COELHO: "Coelho",
+        PASSARO: "Pássaro",
+        OUTRO: "Outro"
+    };
+
     const listaPets = document.getElementById("listaPets");
     const modal = document.getElementById("modal");
     const formPet = document.getElementById("formPet");
     const mensagem = document.getElementById("mensagem");
+
+    let timerMensagem;
+
+    // Evita que texto digitado quebre o HTML (ou injete scripts)
+    function esc(texto) {
+        return String(texto ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function rotulo(valor) {
+        return ROTULOS[valor] || valor || "Não informado";
+    }
 
     // GET - BUSCAR TODOS OS PETS
     async function listarPets() {
@@ -460,11 +490,11 @@
             console.error(erro);
 
             listaPets.innerHTML = `
-                    <div class="empty">
-                        <h3>Ops! Não conseguimos carregar os pets. 🐾</h3>
-                        Verifique se sua API está funcionando.
-                    </div>
-                `;
+                <div class="empty">
+                    <h3>Ops! Não conseguimos carregar os pets. 🐾</h3>
+                    Verifique se sua API está funcionando.
+                </div>
+            `;
         }
     }
 
@@ -475,11 +505,11 @@
 
         if (pets.length === 0) {
             listaPets.innerHTML = `
-                    <div class="empty">
-                        <h3>Nenhum pet cadastrado ainda! 🐶</h3>
-                        Seja o primeiro a cadastrar um amiguinho.
-                    </div>
-                `;
+                <div class="empty">
+                    <h3>Nenhum pet cadastrado ainda! 🐶</h3>
+                    Seja o primeiro a cadastrar um amiguinho.
+                </div>
+            `;
             return;
         }
 
@@ -488,44 +518,44 @@
             const card = document.createElement("div");
             card.className = "pet-card";
 
-            const foto = pet.foto ||
-                "https://placehold.co/400x300/f1eaff/7656d6?text=Pet+Mania";
+            const foto = pet.foto || FOTO_PADRAO;
 
+            // this.onerror=null evita loop infinito se a imagem padrão também falhar
             card.innerHTML = `
-                    <img src="${foto}" alt="Foto de ${pet.nome}"
-                         onerror="this.src='https://placehold.co/400x300/f1eaff/7656d6?text=Pet+Mania'">
+                <img src="${esc(foto)}" alt="Foto de ${esc(pet.nome)}"
+                     onerror="this.onerror=null; this.src='${FOTO_PADRAO}'">
 
-                    <div class="pet-info">
+                <div class="pet-info">
 
-                        <h3>🐾 ${pet.nome}</h3>
+                    <h3>🐾 ${esc(pet.nome)}</h3>
 
-                        <p><strong>Espécie:</strong> ${pet.especie}</p>
-                        <p><strong>Raça:</strong> ${pet.raca || "Não informada"}</p>
-                        <p><strong>Idade:</strong> ${pet.idade} anos</p>
-                        <p><strong>Sexo:</strong> ${pet.sexo}</p>
-                        <p><strong>Porte:</strong> ${pet.porte}</p>
-                        <p><strong>Personalidade:</strong> ${pet.personalidade || "Não informada"}</p>
+                    <p><strong>Espécie:</strong> ${esc(rotulo(pet.especie))}</p>
+                    <p><strong>Raça:</strong> ${esc(pet.raca || "Não informada")}</p>
+                    <p><strong>Idade:</strong> ${esc(pet.idade)} ${pet.idade === 1 ? "ano" : "anos"}</p>
+                    <p><strong>Sexo:</strong> ${esc(rotulo(pet.sexo))}</p>
+                    <p><strong>Porte:</strong> ${esc(rotulo(pet.porte))}</p>
+                    <p><strong>Personalidade:</strong> ${esc(pet.personalidade || "Não informada")}</p>
 
-                        <span class="badge ${pet.disponivel ? "" : "indisponivel"}">
-                            ${pet.disponivel ? "Disponível para adoção" : "Indisponível"}
-                        </span>
+                    <span class="badge ${pet.disponivel ? "" : "indisponivel"}">
+                        ${pet.disponivel ? "Disponível para adoção" : "Indisponível"}
+                    </span>
 
-                        <div class="card-actions">
+                    <div class="card-actions">
 
-                            <button class="btn btn-edit"
-                                onclick="editarPet(${pet.id})">
-                                ✏️ Editar
-                            </button>
+                        <button class="btn btn-edit"
+                            onclick="editarPet(${Number(pet.id)})">
+                            ✏️ Editar
+                        </button>
 
-                            <button class="btn btn-delete"
-                                onclick="excluirPet(${pet.id})">
-                                🗑️ Excluir
-                            </button>
-
-                        </div>
+                        <button class="btn btn-delete"
+                            onclick="excluirPet(${Number(pet.id)})">
+                            🗑️ Excluir
+                        </button>
 
                     </div>
-                `;
+
+                </div>
+            `;
 
             listaPets.appendChild(card);
 
@@ -549,53 +579,42 @@
         modal.style.display = "none";
     }
 
+    // Fecha o modal ao clicar fora da caixa branca
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            fecharModal();
+        }
+    });
+
     // POST - CADASTRAR PET
     // PUT - ATUALIZAR PET
-    formPet.addEventListener("submit", async function(event) {
+    formPet.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
         const id = document.getElementById("id").value;
 
         const pet = {
-            nome: document.getElementById("nome").value,
+            nome: document.getElementById("nome").value.trim(),
             especie: document.getElementById("especie").value,
-            raca: document.getElementById("raca").value,
+            raca: document.getElementById("raca").value.trim(),
             idade: Number(document.getElementById("idade").value),
             sexo: document.getElementById("sexo").value,
             porte: document.getElementById("porte").value,
-            personalidade: document.getElementById("personalidade").value,
-            foto: document.getElementById("foto").value,
+            personalidade: document.getElementById("personalidade").value.trim(),
+            foto: document.getElementById("foto").value.trim(),
             disponivel: document.getElementById("disponivel").value === "true"
         };
 
         try {
 
-            let resposta;
-
-            if (id) {
-
-                // PUT - ATUALIZAR
-                resposta = await fetch(`${API_URL}/${id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(pet)
-                });
-
-            } else {
-
-                // POST - CADASTRAR
-                resposta = await fetch(API_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(pet)
-                });
-
-            }
+            const resposta = await fetch(id ? `${API_URL}/${id}` : API_URL, {
+                method: id ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(pet)
+            });
 
             if (!resposta.ok) {
                 throw new Error("Não foi possível salvar o pet.");
@@ -652,6 +671,7 @@
 
         } catch (erro) {
 
+            console.error(erro);
             mostrarMensagem(erro.message);
 
         }
@@ -697,7 +717,8 @@
 
         mensagem.textContent = texto;
 
-        setTimeout(() => {
+        clearTimeout(timerMensagem);
+        timerMensagem = setTimeout(() => {
             mensagem.textContent = "";
         }, 4000);
 
